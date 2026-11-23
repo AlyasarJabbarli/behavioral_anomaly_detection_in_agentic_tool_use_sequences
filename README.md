@@ -1,6 +1,6 @@
 # Behavioural Anomaly Detection in Agentic Tool-Use Sequences
 
-MSc thesis project, ELTE Faculty of Informatics (Data Science). Author: Laguna Rosa.
+MSc thesis project, ELTE Faculty of Informatics (Data Science). Author: Alyasar Jabbarli.
 
 ## Research question
 
