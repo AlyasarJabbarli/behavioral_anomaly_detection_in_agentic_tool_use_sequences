@@ -18,8 +18,8 @@ of untrusted text, so the detector itself cannot be prompt-injected.
 |---|---|
 | Project setup (package, tests, lint) | done |
 | Data: AgentDojo recorded runs downloaded and parsed to JSONL | done |
-| Attack-family grouping and held-out choice | **open** (see `docs/decisions.md`) |
-| Normal / attack data selection and labels | open |
+| Attack-family grouping and held-out choice (guard in `trace_ad.data.families`) | done |
+| Normal / attack data selection and labels | **open** (see `docs/decisions.md`) |
 | Features (tool categories, n-grams, intent mismatch, provenance, novelty) | not started |
 | Models: frequency baseline → Markov/n-gram → Isolation Forest → (LSTM AE) | not started |
 | Evaluation (detection rate at 1%/5% FPR, PR/ROC-AUC, alarms per 1k runs, delay) | not started |

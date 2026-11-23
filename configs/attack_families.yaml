@@ -1,0 +1,46 @@
+# Attack families: AgentDojo injection tasks grouped by the attacker's end goal.
+# Decided 2026-11-23 from the task definitions only, before any attack trace was
+# inspected (docs/decisions.md). Frozen: do not edit once development starts.
+#
+# Rule: a task belongs to the family of the goal stated in its GOAL text, not the
+# tool it uses. Tasks with several goals go to their first goal.
+# Task numbers refer to injection_task_<n> in each suite (v1.2.1 definitions;
+# v1 runs use a subset of the same ids).
+
+families:
+  exfiltration:
+    description: Leak private user data to an attacker-controlled destination.
+    tasks:
+      workspace: [3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+      travel: [1, 3, 5]
+      slack: [2, 4]
+      banking: [0, 1, 2, 3, 8]
+  financial_theft:
+    description: Move money or make purchases on the user's behalf for the attacker.
+    tasks:
+      banking: [4, 5, 6]
+      travel: [0, 4]
+  phishing_links:
+    description: Deliver attacker-chosen messages or links, or visit attacker URLs.
+    tasks:
+      workspace: [0, 13]
+      slack: [1, 3]
+  tampering:
+    description: Unauthorised changes to the user's data, calendar or accounts.
+    tasks:
+      workspace: [1, 2]
+      travel: [2]
+      banking: [7]
+      slack: [5]
+  text_only:
+    description: Manipulates only the agent's reply text; no tool call is involved.
+    tasks:
+      travel: [6]
+
+splits:
+  # Used to make design choices (features, model settings).
+  development: [exfiltration, tampering]
+  # Used exactly once, after all design choices are frozen ("final evaluation").
+  held_out: [financial_theft, phishing_links]
+  # Undetectable from tool calls by construction; reported as a limitation case.
+  limitation: [text_only]
