@@ -1,0 +1,10 @@
+# Data sources. Everything under data/ is gitignored and rebuilt from this file.
+
+agentdojo_runs:
+  # Recorded benchmark runs published in the AgentDojo repository (runs/ directory).
+  repo_url: https://github.com/ethz-spylab/agentdojo.git
+  # Pinned commit so the raw data is identical on every machine.
+  commit: 089ed468cf3ed0322acc66b0211f26d9d90dbf60
+  raw_dir: data/raw/agentdojo
+  # Lossless parse of every run file: one JSON object per run.
+  processed_path: data/processed/agentdojo_runs.jsonl
