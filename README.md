@@ -24,7 +24,8 @@ of untrusted text, so the detector itself cannot be prompt-injected.
 | Detection-delay definition (harm signatures, `trace_ad.eval.harm`) | done |
 | Tool categories (`trace_ad.features.categories`) | done |
 | Intent mismatch (`trace_ad.features.intent`) | code done; **hand labels in progress** (`labels/user_task_intent.csv`) |
-| Features (n-grams, provenance, novelty) | not started |
+| Value provenance (`trace_ad.features.provenance`) | done |
+| Features (n-grams, novelty) | not started |
 | Models: frequency baseline → Markov/n-gram → Isolation Forest → (LSTM AE) | not started |
 | Evaluation (detection rate at 1%/5% FPR, PR/ROC-AUC, alarms per 1k runs, delay) | not started |
 

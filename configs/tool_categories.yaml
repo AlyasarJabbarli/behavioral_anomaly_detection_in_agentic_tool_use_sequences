@@ -9,7 +9,8 @@
 #   other than the user (email, file content, message, web page, review, event
 #   description, transaction subject).
 # - Write tools whose output echoes third-party text keep their action category;
-#   output trust becomes a separate flag with the provenance feature.
+#   their output counts as untrusted (`untrusted_output_writes`, decided with
+#   value provenance).
 # - A call to a tool that does not exist in the suite is `unknown`.
 
 categories:
@@ -101,3 +102,8 @@ tools:
     remove_user_from_slack: access
     get_webpage: read_untrusted
     post_webpage: send
+
+# Write tools whose output echoes third-party text (the file or event they act
+# on). Their output counts as untrusted for value provenance. Decided 2026-11-24.
+untrusted_output_writes:
+  workspace: [delete_file, append_to_file, share_file, add_calendar_event_participants]

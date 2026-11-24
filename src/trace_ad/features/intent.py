@@ -27,6 +27,7 @@ from typing import Any
 
 from trace_ad.config import repo_path
 from trace_ad.features.categories import ToolCategories, load_tool_categories
+from trace_ad.features.steps import first_true, running_count
 
 ACTION_CATEGORIES = ("write", "delete", "send", "payment", "access")
 TaskKey = tuple[str, str]  # (suite, user_task_id)
@@ -111,15 +112,11 @@ def mismatch_flags(
 
 def running_mismatch_count(flags: list[bool]) -> list[int]:
     """Number of mismatches up to and including each step."""
-    counts, total = [], 0
-    for flag in flags:
-        total += flag
-        counts.append(total)
-    return counts
+    return running_count(flags)
 
 
 def first_mismatch_step(flags: list[bool]) -> int | None:
-    return next((step for step, flag in enumerate(flags) if flag), None)
+    return first_true(flags)
 
 
 # --- independent check against AgentDojo ground truth -------------------------------

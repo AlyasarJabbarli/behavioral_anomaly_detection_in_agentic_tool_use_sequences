@@ -90,3 +90,23 @@ def test_invalid_category_rejected():
 def test_coverage_check_reports_gaps():
     with pytest.raises(ValueError, match="missing"):
         check_covers_suites(CATS, {"banking": ["send_money", "brand_new_tool"]})
+
+
+def test_untrusted_output_flag():
+    echo = {"delete_file", "append_to_file", "share_file", "add_calendar_event_participants"}
+    assert {t for s, t in CATS.untrusted_output_writes} == echo
+    assert CATS.output_untrusted("workspace", "delete_file")
+    assert CATS.output_untrusted("slack", "read_channel_messages")
+    assert not CATS.output_untrusted("slack", "get_channels")  # kept trusted
+    assert not CATS.output_untrusted("workspace", "send_email")
+    assert CATS.is_value_source("workspace", "delete_file")
+    assert CATS.is_value_source("banking", "get_iban")
+    assert not CATS.is_value_source("banking", "send_money")  # echoes the agent's own arguments
+    assert not CATS.is_value_source("travel", "get_current_date")  # unknown tool
+
+
+def test_untrusted_output_writes_must_be_write_tools():
+    cfg = load_config(PATH)
+    cfg["untrusted_output_writes"] = {"workspace": ["search_emails"]}
+    with pytest.raises(ValueError, match="must list write tools"):
+        parse_tool_categories(cfg)

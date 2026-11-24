@@ -357,3 +357,64 @@ keep ground truth available as an independent check. Category-level labels
 also catch attacks inside action tasks: "pay my bill" allows payment but not
 send. Attacks that reuse an allowed action (e.g. exfiltration by payment in a
 payment task, 367 development runs) are left to the provenance feature.
+
+## 2026-11-24 — Value provenance
+
+Decision: for every action call (write, delete, send, payment, access), each
+email address, IBAN and URL in **any** argument gets a provenance class:
+`user` (in the user's request), `trusted` / `untrusted` (the trust of the
+earliest earlier read that contained it), or `none` (seen nowhere earlier)
+(`trace_ad.features.provenance`). Features per call: carries an untrusted
+value; carries a `none` value; running count and first step of the former.
+
+Rules:
+1. Typed values are found by pattern and compared in lower case (URLs without
+   scheme, `www.` or trailing slash; IBANs also against text with whitespace
+   removed). URLs: `http(s)://` or `www.` prefix, or a bare name ending in one of
+   the original generic top-level domains (com, net, org, edu, gov, mil, int),
+   fixed in advance; only URL characters are taken, and literal `\n` sequences
+   that agents write into arguments count as spaces.
+2. First appearance decides, as the protocol states.
+3. Untrusted sources: untrusted reads, and the four write tools that echo
+   third-party text (`delete_file`, `append_to_file`, `share_file`,
+   `add_calendar_event_participants`; `untrusted_output_writes` in
+   `configs/tool_categories.yaml`). This settles the output-trust flag deferred
+   with the tool categories.
+4. Only read outputs (and those four tools) are sources; outputs of other
+   actions echo the agent's own arguments.
+5. Only action calls are checked, not reads: 204 of the 507 URLs normal agents
+   open come from untrusted text.
+6. The detector only tests whether a value's string occurs in earlier text;
+   it never interprets that text.
+7. Slack `get_channels` stays a trusted read (tool-category decision), although
+   AgentDojo injects into channel names. Consequence: in 136 development
+   attacks (all Slack injection 5) the attacker's address first appears in a
+   channel name and is classed `trusted`. Reported as a limitation (an attacker
+   who can name a channel); reclassifying now would tune the categories to the
+   benchmark.
+
+Result (implementation): 12.6% of normal runs act on an untrusted value
+(legitimately, e.g. paying the IBAN on a bill); 70.6% of development attacks
+carry an untrusted value at the harmful call (exfiltration 98%, tampering
+40%, where harm values are mostly file ids and passwords). `none` values are
+3.8% of normal and 0.7% of attack values, almost all addresses the model made
+up. Provenance is therefore a signal for the models, not an alarm by itself.
+With ground-truth intent labels as a stand-in, 86% of development attacks
+without an intent mismatch carry an untrusted value at the harmful call, and
+mismatch or provenance covers 94% of development attacks.
+
+Honest limit: when the legitimate value also comes from a document, the two
+cannot be told apart by provenance. Example, banking `user_task_0` ("pay the
+bill"): normal `read_file → send_money[UK1234… ← untrusted]`; attack
+`read_file → … → send_money[US1330… ← untrusted]`.
+
+Alternatives considered:
+- Destination arguments only (`recipients`, `cc`/`bcc`, `recipient`,
+  `user_email`, `email`, `participants`, `url`): 10.8% of normal runs, 63.5% of
+  attacks at the harmful call, but needs a per-tool list of argument names and
+  misses values carried in payloads (a link in a message body, an IBAN in a
+  payment subject).
+- Reclassifying `get_channels` as untrusted: rejected, see rule 7.
+
+Why typed values in any argument: no per-tool lists, so it transfers to
+ATBench unchanged, and it covers payloads as well as destinations.

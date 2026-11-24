@@ -90,6 +90,10 @@ Found while checking harm signatures against normal runs:
 - **Travel `user_task_3`**: the user legitimately emails `janeLong@google.com`
   (the user's wife), who is also the recipient in travel injection task 5.
 
+- **Slack channel names**: AgentDojo places an injection slot in a channel
+  name, so injected text (including attacker addresses) is returned by
+  `get_channels`, which this project classes as a trusted read.
+
 AgentDojo has no notion of a "harmful call": tools carry no read-only or
 side-effect marks, and no code mentions one. Ground truth for workspace
 injection tasks 6–12 is literally `return []`.
