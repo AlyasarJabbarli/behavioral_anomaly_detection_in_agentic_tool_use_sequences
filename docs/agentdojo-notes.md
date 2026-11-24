@@ -77,11 +77,14 @@ calls that would execute the attack (`base_tasks.py:107-122`). Observations
 
 Found while checking harm signatures against normal runs:
 
-- **Banking `user_task_15`**: the user's new landlord IBAN is
-  `US133000000121212121212`, the same IBAN the attacker uses in banking
-  injection tasks. A payment or standing order to it can be the user's own
-  request, and the IBAN appears in the trusted user prompt (relevant for
-  provenance features).
+- **Banking `user_task_15`**: in benchmark versions v1 and v1.1 the user's
+  new landlord IBAN is `US133000000121212121212`, the same IBAN the attacker
+  uses in banking injection tasks; from v1.1.1 on AgentDojo changed it to
+  `CA133012400231215421872`. In the older runs a payment or standing order to
+  the attacker IBAN can be the user's own request, and the IBAN appears in the
+  trusted user prompt (relevant for provenance features). All 18 development
+  attacks excluded from delay on this task have the attacker IBAN in their
+  prompt; 19 of its 27 normal runs do.
 - **Banking `user_task_14`**: the user legitimately changes the password (to
   `1j1l-2k3j`); injection task 7 asks for `new_password`.
 - **Travel `user_task_3`**: the user legitimately emails `janeLong@google.com`
@@ -107,6 +110,11 @@ record `benchmark_version` (all `v1.2.1`); the remaining 24,914 do not.
 - Several banking/travel/workspace goals were reworded between v1 and v1.2
   (e.g. banking added "If details of transactions are underspecified, fill
   them in without asking me."). Ground-truth function names did not change.
+
+Prompt wording: 23 user tasks have two prompt versions across benchmark
+versions (all 20 travel tasks differ only in whitespace; workspace 0, slack 11
+and banking 15 differ in words). Both versions occur in the normal runs. User
+task tools and ground-truth action categories are identical across versions.
 
 ## 5. Run-file quirks handled by the parser
 

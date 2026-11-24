@@ -23,7 +23,8 @@ of untrusted text, so the detector itself cannot be prompt-injected.
 | Attack runs and labels (`select_attack_runs`) | done |
 | Detection-delay definition (harm signatures, `trace_ad.eval.harm`) | done |
 | Tool categories (`trace_ad.features.categories`) | done |
-| Features (n-grams, intent mismatch, provenance, novelty) | not started |
+| Intent mismatch (`trace_ad.features.intent`) | code done; **hand labels in progress** (`labels/user_task_intent.csv`) |
+| Features (n-grams, provenance, novelty) | not started |
 | Models: frequency baseline → Markov/n-gram → Isolation Forest → (LSTM AE) | not started |
 | Evaluation (detection rate at 1%/5% FPR, PR/ROC-AUC, alarms per 1k runs, delay) | not started |
 
@@ -51,6 +52,12 @@ trace-ad-download --config configs/data.yaml
 trace-ad-parse --config configs/data.yaml
 ```
 
+Check the intent labels (see `docs/intent-labelling-guide.md`):
+
+```bash
+trace-ad-intent-check
+```
+
 Run tests and lint:
 
 ```bash
@@ -64,7 +71,8 @@ ruff check src tests
 src/trace_ad/     data/ (download, parse, task definitions), features/, models/, eval/
 configs/          YAML configs; every experiment is reproducible from one
 data/             raw/ and processed/ (gitignored)
-docs/             decisions.md (decision log), agentdojo-notes.md
+docs/             decisions.md (decision log), agentdojo-notes.md, intent-labelling-guide.md
+labels/           hand-made labels (user-task intent)
 notebooks/        exploration only, never the source of results
 results/          metrics and figures produced from configs
 tests/            pytest suite

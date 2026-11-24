@@ -26,6 +26,7 @@ nn = ["torch>=2.2"]
 [project.scripts]
 trace-ad-download = "trace_ad.data.download:main"
 trace-ad-parse = "trace_ad.data.agentdojo_runs:main"
+trace-ad-intent-check = "trace_ad.features.intent:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
