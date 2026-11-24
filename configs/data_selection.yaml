@@ -1,0 +1,16 @@
+# Which recorded runs are used. Decided 2026-11-24 (docs/decisions.md).
+
+pipelines:
+  # Excluded for BOTH normal and attack runs, so the detector is only evaluated
+  # on setups whose normal behaviour it was trained on.
+  # The prompt-injection-detector defence censored tool outputs in 63 of its 97
+  # normal runs (false positives), so its "normal" runs are not normal use.
+  exclude:
+    - gpt-4o-2024-05-13-transformers_pi_detector
+
+normal:
+  # A normal run is a user-task run with no attack. In addition:
+  # - runs with a run-level API error (context length, server error) are dropped;
+  # - runs where the agent failed the task (utility False) are KEPT;
+  # - runs with no tool calls, and requested-but-unexecuted calls, are KEPT.
+  drop_run_errors: true

@@ -17,14 +17,10 @@ Why: the reason for the choice.
 Listed in the order they need to be made. Only development-family attack
 runs may be inspected (see the 2026-11-23 entry below).
 
-1. **Which runs count as normal training data.** Benign user-task runs only, or
-   also the "injection task run alone" files; with or without defended
-   pipelines (`-tool_filter`, `-transformers_pi_detector`, …); how to treat
-   runs with a run-level error, empty transcripts and unexecuted calls.
-2. **Attack label details.** Successful (`security == True`, no error) attack
+1. **Attack label details.** Successful (`security == True`, no error) attack
    runs are attacks. To decide: treatment of failed attack attempts in the test
    set, DoS attack types, and the text-only injection task (travel 6).
-3. **Definition of the "first harmful call"** for detection delay, given that
+2. **Definition of the "first harmful call"** for detection delay, given that
    ground truth includes read calls and is empty for some tasks.
 
 ## Log
@@ -77,3 +73,49 @@ including injection tasks run on their own, unless called with
 suite's first injection task and follow that task's family. Resulting sizes:
 23,661 development attack runs, 1,000 limitation-case runs, 8,688 held-out
 runs hidden, and 2,756 benign runs.
+
+## 2026-11-24 — Normal data
+
+Decision: a run is **normal** if it is a user-task run with no attack, from
+any pipeline except `gpt-4o-2024-05-13-transformers_pi_detector`, and has no
+run-level error (`configs/data_selection.yaml`, `trace_ad.data.selection`).
+Runs where the agent failed the user's task, runs with no tool calls, and
+calls that were requested but never executed are kept. The same pipeline
+exclusion applies to attack runs, so attacks are only evaluated on setups
+whose normal behaviour was learned.
+
+Result: 2,648 normal runs from 28 pipelines over all 97 user tasks (banking
+432, slack 567, travel 539, workspace 1,110). Of these, 1,100 failed the
+user's task, 214 make no tool call and 49 end with unexecuted calls. The
+largest share from one model is gpt-4o at 14.7% (four pipelines).
+
+Alternatives considered:
+- Undefended pipelines only (22 pipelines, 2,123 runs): one pipeline per
+  model and no defence effects, but 20% less data and no evidence about the
+  detector running next to a defence.
+- All 29 pipelines (2,745 runs): the most data, but includes the
+  prompt-injection-detector pipeline, which replaced at least one tool output
+  in 63 of its 97 normal runs (false positives). Its agents were reacting to
+  censored data, which shows in a task-success rate of 41% against 55–72% for
+  the other setups.
+- Adding failed attack runs as extra normal data (not offered): breaks
+  "trained only on normal logs", puts development-attack information into
+  training, and partly followed attacks would contaminate the normal set.
+
+Why: the repeat-prompt, spotlighting and tool-filter defences change the
+agent's prompt or tool set, but the resulting behaviour is still genuine
+normal use in a different deployment, and it adds variety (under the tool
+filter, gpt-4o's call sequence matches its undefended run in only 54% of
+tasks). The detector defence is the exception, because its normal runs are
+distorted by false positives.
+
+Rules and their reasons:
+- Injection tasks run on their own are not normal: they are attack goals
+  given as if the user asked for them.
+- Run-level API errors (11 runs) are dropped: the trace was cut short by
+  infrastructure, not by the agent.
+- Failed tasks (42%) are kept: the detector cannot know task success at run
+  time, and dropping failures would make ordinary failures look anomalous,
+  inflating false alarms in real use.
+- Zero-call runs and unexecuted calls are kept: a monitor sees a call when it
+  is requested, so a requested call is observable behaviour.
