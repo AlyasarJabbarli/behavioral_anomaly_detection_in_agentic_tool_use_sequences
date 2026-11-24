@@ -21,7 +21,7 @@ of untrusted text, so the detector itself cannot be prompt-injected.
 | Attack-family grouping and held-out choice (guard in `trace_ad.data.families`) | done |
 | Normal data selection (`trace_ad.data.selection`) | done |
 | Attack runs and labels (`select_attack_runs`) | done |
-| Detection-delay definition (first harmful call) | **open** (see `docs/decisions.md`) |
+| Detection-delay definition (harm signatures, `trace_ad.eval.harm`) | done |
 | Features (tool categories, n-grams, intent mismatch, provenance, novelty) | not started |
 | Models: frequency baseline → Markov/n-gram → Isolation Forest → (LSTM AE) | not started |
 | Evaluation (detection rate at 1%/5% FPR, PR/ROC-AUC, alarms per 1k runs, delay) | not started |

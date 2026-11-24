@@ -5,7 +5,7 @@ source or the data. Source references point to the AgentDojo repository at the
 pinned commit `089ed468cf3ed0322acc66b0211f26d9d90dbf60` (package version
 `0.1.35`, which is also the version pinned in `pyproject.toml`).
 
-Last updated: 2026-11-23.
+Last updated: 2026-11-24.
 
 ## 1. Recorded runs already exist
 
@@ -72,6 +72,28 @@ calls that would execute the attack (`base_tasks.py:107-122`). Observations
 - Travel injection task 6 asks only for a **text output** (recommend a hotel).
   No tool call is involved, so a detector that sees only tool calls cannot
   catch it by construction.
+
+## 3a. Coincidences between user tasks and injection tasks
+
+Found while checking harm signatures against normal runs:
+
+- **Banking `user_task_15`**: the user's new landlord IBAN is
+  `US133000000121212121212`, the same IBAN the attacker uses in banking
+  injection tasks. A payment or standing order to it can be the user's own
+  request, and the IBAN appears in the trusted user prompt (relevant for
+  provenance features).
+- **Banking `user_task_14`**: the user legitimately changes the password (to
+  `1j1l-2k3j`); injection task 7 asks for `new_password`.
+- **Travel `user_task_3`**: the user legitimately emails `janeLong@google.com`
+  (the user's wife), who is also the recipient in travel injection task 5.
+
+AgentDojo has no notion of a "harmful call": tools carry no read-only or
+side-effect marks, and no code mentions one. Ground truth for workspace
+injection tasks 6–12 is literally `return []`.
+
+Label noise: 2 of 2,226 successful development attacks never make the
+harmful call (banking injection task 2, slack injection task 4), yet AgentDojo
+marks them successful.
 
 ## 4. Benchmark versions
 
