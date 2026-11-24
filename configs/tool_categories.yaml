@@ -1,0 +1,103 @@
+# Tool categories: the vocabulary every detector sees instead of raw tool names.
+# Decided 2026-11-24 (docs/decisions.md). Assigned from each tool's name,
+# description and output only (never from attack traces), for every tool in the
+# four AgentDojo suites. Tool sets are identical across benchmark versions.
+#
+# Rules:
+# - A tool's category is what the call does.
+# - A read is untrusted if its output can contain free text written by someone
+#   other than the user (email, file content, message, web page, review, event
+#   description, transaction subject).
+# - Write tools whose output echoes third-party text keep their action category;
+#   output trust becomes a separate flag with the provenance feature.
+# - A call to a tool that does not exist in the suite is `unknown`.
+
+categories:
+  read_trusted: Returns the user's own data or structured listings, no third-party free text.
+  read_untrusted: Returns content that can include free text written by someone else.
+  write: Creates or changes the user's own data without disclosing it to anyone.
+  delete: Removes or cancels data.
+  send: Makes content available to another party (email, message, web post, file share).
+  payment: Moves money or commits the user to a purchase or booking.
+  access: Changes credentials or who belongs to the user's accounts or workspace.
+  unknown: Call to a tool that does not exist in the suite.
+
+tools:
+  workspace:
+    send_email: send
+    delete_email: delete
+    get_unread_emails: read_untrusted
+    get_sent_emails: read_untrusted          # may quote other people
+    get_received_emails: read_untrusted
+    get_draft_emails: read_untrusted         # may quote other people
+    search_emails: read_untrusted
+    search_contacts_by_name: read_trusted
+    search_contacts_by_email: read_trusted
+    get_current_day: read_trusted
+    search_calendar_events: read_untrusted   # descriptions written by organisers
+    get_day_calendar_events: read_untrusted
+    create_calendar_event: write             # invitees are judged by provenance/novelty
+    cancel_calendar_event: delete
+    reschedule_calendar_event: write
+    add_calendar_event_participants: write
+    append_to_file: write
+    search_files_by_filename: read_untrusted # returns file content
+    create_file: write
+    delete_file: delete
+    get_file_by_id: read_untrusted
+    list_files: read_untrusted               # returns file content
+    share_file: send                         # discloses a file to another person
+    search_files: read_untrusted
+  travel:
+    get_user_information: read_trusted
+    get_all_hotels_in_city: read_trusted
+    get_hotels_prices: read_trusted
+    get_rating_reviews_for_hotels: read_untrusted
+    get_hotels_address: read_trusted
+    get_all_restaurants_in_city: read_trusted
+    get_cuisine_type_for_restaurants: read_trusted
+    get_restaurants_address: read_trusted
+    get_rating_reviews_for_restaurants: read_untrusted
+    get_dietary_restrictions_for_all_restaurants: read_trusted
+    get_contact_information_for_restaurants: read_trusted
+    get_price_for_restaurants: read_trusted
+    check_restaurant_opening_hours: read_trusted
+    get_all_car_rental_companies_in_city: read_trusted
+    get_car_types_available: read_trusted
+    get_rating_reviews_for_car_rental: read_untrusted
+    get_car_fuel_options: read_trusted
+    get_car_rental_address: read_trusted
+    get_car_price_per_day: read_trusted
+    create_calendar_event: write
+    search_calendar_events: read_untrusted
+    get_day_calendar_events: read_untrusted
+    cancel_calendar_event: delete
+    reserve_hotel: payment                   # commits the user to a booking
+    reserve_car_rental: payment
+    reserve_restaurant: payment
+    get_flight_information: read_trusted
+    send_email: send
+  banking:
+    get_iban: read_trusted
+    send_money: payment
+    schedule_transaction: payment
+    update_scheduled_transaction: payment
+    get_balance: read_trusted
+    get_most_recent_transactions: read_untrusted  # subjects written by senders
+    get_scheduled_transactions: read_trusted      # set up by the user
+    read_file: read_untrusted
+    get_user_info: read_trusted
+    update_password: access
+    update_user_info: write
+  slack:
+    get_channels: read_trusted               # channel names are identifiers
+    add_user_to_channel: access
+    read_channel_messages: read_untrusted
+    read_inbox: read_untrusted
+    send_direct_message: send
+    send_channel_message: send
+    get_users_in_channel: read_trusted
+    invite_user_to_slack: access
+    remove_user_from_slack: access
+    get_webpage: read_untrusted
+    post_webpage: send

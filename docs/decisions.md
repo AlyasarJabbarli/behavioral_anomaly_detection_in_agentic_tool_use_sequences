@@ -233,3 +233,76 @@ Why: per-task signatures were the only option that located the harm
 correctly in essentially all attacks without firing on normal runs. Each
 row traces back to the goal text or ground truth, and the config values are
 checked against AgentDojo's environment in the tests.
+
+## 2026-11-24 — Tool categories
+
+Decision: detectors see each call as one of seven categories describing what
+it does, plus `unknown` (`configs/tool_categories.yaml`,
+`trace_ad.features.categories`):
+
+| Category | Meaning | Tools |
+|---|---|---|
+| read_trusted | the user's own data or structured listings | 26 |
+| read_untrusted | output can contain free text written by someone else | 21 |
+| write | creates or changes the user's own data | 7 |
+| delete | removes or cancels data | 4 |
+| send | makes content available to another party | 6 |
+| payment | moves money or commits to a purchase or booking | 6 |
+| access | changes credentials or account/workspace membership | 4 |
+| unknown | call to a tool the suite does not define | — |
+
+Rules:
+- Categories are assigned from each tool's name, description and output only,
+  for all 74 tools (including those used by held-out attacks), and are not
+  adjusted after seeing results. Tool sets are identical across benchmark
+  versions, so one mapping covers every run.
+- A read is untrusted if its output can contain free text written by someone
+  other than the user (email, file content, message, web page, review, event
+  description, transaction subject).
+- Write tools whose output echoes third-party text (`delete_file`,
+  `append_to_file`, `share_file`, `add_calendar_event_participants`) keep their
+  action category; output trust becomes a separate flag with the provenance
+  feature.
+- Calls to tools that do not exist in the suite (names invented by the model)
+  are `unknown`: none in normal runs, 9 calls in 8 development attack runs.
+
+Judgement calls: `share_file` → send; `reserve_hotel`, `reserve_car_rental`,
+`reserve_restaurant` → payment; `create_calendar_event` and
+`add_calendar_event_participants` → write (invitees are judged by the
+provenance and novelty features); `remove_user_from_slack` → access;
+`get_scheduled_transactions` → read_trusted, `get_most_recent_transactions` →
+read_untrusted; sent and draft emails → read_untrusted; Slack `get_channels`
+→ read_trusted.
+
+Alternatives considered (granularity), with an illustrative check — flag a run
+if it contains a transition never seen in normal training runs, 5 folds split
+by user task (not a reported result):
+
+| Vocabulary | Normal runs from unseen tasks flagged | Development attacks flagged |
+|---|---|---|
+| 5 categories (no delete/access) | 0.3% | 6.1% |
+| **7 categories (chosen)** | 1.1% | 14.2% |
+| raw tool names (69) | 22.8% | 79.5% |
+
+- 5 categories: densest and most transferable, but deleting a file, changing
+  a password and inviting a user all look like routine writes. Example: the
+  attacker's calendar event inside "Find and delete the largest file" is
+  `read_untrusted → delete → write → delete` with 7 categories (unseen pairs)
+  but `read_untrusted → write → write → write` with 5.
+- Raw tool names: flag most attacks but also 23% of normal runs from unseen
+  user tasks, far above the 1% and 5% targets, because an unseen task usually
+  brings unseen tool pairs (e.g. Slack `user_task_11`: `read_inbox →
+  invite_user_to_slack` occurs only there). Not transferable to ATBench.
+
+Alternatives considered (untrusted reads):
+- AgentDojo's injection slots (untrusted only if AgentDojo can inject into the
+  output): matches the benchmark exactly but is tuned to where AgentDojo
+  happened to put injections. It disagrees with the semantic rule on 7 reads,
+  e.g. Slack channel messages (written by colleagues, no slot) and channel
+  names (identifiers, but AgentDojo injects there).
+
+Why: seven categories keep destructive and account actions apart from routine
+writes while staying small enough to transfer and to explain; the semantic
+rule follows the design principle (where values came from) rather than the
+benchmark's injection placement. In the data, delete calls are 0.5% of normal
+calls but 2.5% of development-attack calls; access calls 3.6% vs 12.7%.
