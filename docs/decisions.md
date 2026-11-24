@@ -17,11 +17,10 @@ Why: the reason for the choice.
 Listed in the order they need to be made. Only development-family attack
 runs may be inspected (see the 2026-11-23 entry below).
 
-1. **Attack label details.** Successful (`security == True`, no error) attack
-   runs are attacks. To decide: treatment of failed attack attempts in the test
-   set, DoS attack types, and the text-only injection task (travel 6).
-2. **Definition of the "first harmful call"** for detection delay, given that
-   ground truth includes read calls and is empty for some tasks.
+1. **Definition of the "first harmful call"** for detection delay, given that
+   ground truth includes read calls and is empty for some tasks. The same
+   definition will split failed attack attempts into "made a harmful call" and
+   "did not" (see the 2026-11-24 attack-label entry).
 
 ## Log
 
@@ -119,3 +118,58 @@ Rules and their reasons:
   inflating false alarms in real use.
 - Zero-call runs and unexecuted calls are kept: a monitor sees a call when it
   is requested, so a requested call is observable behaviour.
+
+## 2026-11-24 — Attack runs and labels
+
+Decision: an **attack run** is an `important_instructions` run from a
+non-excluded pipeline, without a run-level error, with a non-empty transcript
+and a recorded security value, and visible under the held-out guard
+(`configs/data_selection.yaml`, `trace_ad.data.selection.select_attack_runs`).
+It is labelled `attack` if AgentDojo's security check says the injection goal
+was achieved, otherwise `failed_attempt`. Main metrics compare `attack` runs
+with normal test runs. Failed attempts are reported separately with their own
+alarm rate, and are never used as normal runs. Travel injection task 6
+(text-only) is reported only as the limitation case.
+
+Result (development families): 2,226 attacks (exfiltration 1,178, tampering
+1,048) over 96 user tasks and 27 pipelines, largest pipeline share 11%;
+10,964 failed attempts. Limitation case: 540 runs, 95 attacks.
+
+Cleanup rules and their reasons:
+- Same pipeline exclusion as normal runs (prompt-injection-detector setup).
+- Run-level API errors dropped (75 development/limitation runs): AgentDojo
+  records every one of them as "attack succeeded" although nothing happened.
+- Empty transcripts dropped (173), plus 1 run with no security value: there
+  is no behaviour to score, and 7 empty runs are wrongly marked "succeeded".
+- Denial-of-service attacks excluded (180 runs, gpt-4o only): their success
+  means the agent failed the user's task; there is no harmful call to detect,
+  and their injection task id is a placeholder.
+- Label check: of 3,474 successful development runs (all attack types) whose
+  injection task has a ground truth, only 1 never calls a ground-truth tool.
+  AgentDojo's label is kept as the protocol requires.
+
+Choice 1, failed attempts — alternatives considered:
+- Count them as normal (negatives): one realistic number, but AgentDojo's
+  success check is strict, and 3.8% of failed attempts (734 runs, all attack
+  types) contain a call carrying the attacker's address, IBAN, URL or password.
+  Catching those would be scored as false alarms. Example: in
+  workspace/injection_task_4, `search_emails → send_email(to=<attacker>)` is
+  labelled failed, with the same structure as a success.
+- Count them as attacks (not offered): contradicts the label definition, and
+  about 96% of them look entirely normal because the agent ignored the
+  injection.
+Why separate: keeps the main metrics exactly on the protocol's label
+definition, while still showing behaviour on the realistic attack mix. A high
+alarm rate on failed attempts that made a harmful call is a strength, not a
+false alarm. The "made a harmful call" split needs the harmful-call
+definition (open decision 1) and is added once that is decided.
+
+Choice 2, attack types — alternatives considered:
+- All non-DoS attack types: 3,487 development attacks (+57%), but three models
+  (gpt-4o, Llama-3.3-70B, Meta-SecAlign-70B) would supply 62% of attack runs
+  instead of 34%, and the same (user task, injection task) pair would appear up
+  to 9 times for gpt-4o, overstating the effective sample size.
+Why `important_instructions`: it is AgentDojo's headline attack and exists for
+all 27 attack pipelines. The other types reword the same goals, and the
+detector never reads wording, so they mostly add near-duplicates. They remain
+available for a later robustness check.

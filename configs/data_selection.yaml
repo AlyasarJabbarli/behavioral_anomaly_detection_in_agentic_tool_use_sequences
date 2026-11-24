@@ -14,3 +14,17 @@ normal:
   # - runs where the agent failed the task (utility False) are KEPT;
   # - runs with no tool calls, and requested-but-unexecuted calls, are KEPT.
   drop_run_errors: true
+
+attacks:
+  # Decided 2026-11-24. Only AgentDojo's headline attack is used; other attack
+  # types reword the same goals and would over-weight three models.
+  # Denial-of-service types (*dos) are never allowed here: their "success" means
+  # the agent failed the user's task, not that a harmful call was made.
+  attack_types: [important_instructions]
+  # Run-level API errors are all recorded as "attack succeeded": drop them.
+  drop_run_errors: true
+  # Runs with no messages (or no security value) contain no behaviour to score.
+  drop_empty_transcripts: true
+  # Labels (AgentDojo security check, True = injection goal achieved):
+  #   attack          -> positive class in the main metrics
+  #   failed_attempt  -> reported separately, never counted as normal
